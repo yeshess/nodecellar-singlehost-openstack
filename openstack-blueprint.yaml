@@ -1,0 +1,184 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+description: >
+  This Blueprint installs single node nodecellar application
+  on Openstack
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.0/types.yaml
+  - http://www.getcloudify.org/spec/openstack-plugin/2.2.0/plugin.yaml
+  - types/nodecellar.yaml
+  - types/openstack-types.yaml
+  - types/cloud_config/cloud-config.yaml
+
+
+
+inputs:
+
+  image:
+    description: >
+      An Openstack Image ID. Tested with a Ubuntu 14.04 image.
+    default: { get_secret: ubuntu_trusty_image }
+
+  flavor:
+    description: >
+      An Openstack Flavor ID.
+    default: { get_secret: small_image_flavor }
+
+  agent_user:
+    description: The user name of the agent on the instance created from the image.
+    default: ubuntu
+
+dsl_definitions:
+
+  openstack_config: &openstack_config
+    username: { get_secret: keystone_username }
+    password: { get_secret: keystone_password }
+    tenant_name: { get_secret: keystone_tenant_name }
+    auth_url: { get_secret: keystone_url }
+    region: { get_secret: region }
+
+node_templates:
+
+  cloudify_host_cloud_config:
+    type: cloudify.nodes.CloudConfig
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            cloud_config:
+              ssh_authorized_keys:
+              - { get_secret: agent_key_public }
+
+  
+  nodecellar:
+    type: nodecellar.nodes.NodecellarApplicationModule
+    relationships:
+      - type: node_connected_to_mongo
+        target: mongod
+      - type: node_contained_in_nodejs
+        target: nodejs
+
+  mongod:
+    type: nodecellar.nodes.MonitoredMongoDatabase
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: nodejs_host
+
+  nodejs:
+    type: nodecellar.nodes.NodeJSServer
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: nodejs_host
+
+  nodejs_host:
+    type: nodecellar.nodes.MonitoredServer
+    instances:
+      deploy: 1
+    properties:
+      openstack_config: *openstack_config
+      management_network_name: { get_property: [ private_network, resource_id ] }
+    relationships:
+      - target: nodejs_host_port
+        type: cloudify.openstack.server_connected_to_port
+  
+  nodejs_host_port:
+    type: cloudify.openstack.nodes.Port
+    properties:
+      openstack_config: *openstack_config
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: private_network
+      - type: cloudify.relationships.depends_on
+        target: private_subnet
+      - type: cloudify.openstack.port_connected_to_security_group
+        target: nodecellar_security_group
+      - type: cloudify.openstack.port_connected_to_floating_ip
+        target: nodecellar_ip
+
+  nodecellar_security_group:
+    type: cloudify.openstack.nodes.SecurityGroup
+    properties:
+      openstack_config: *openstack_config
+      security_group:
+        name: nodecellar_security_group
+      rules:
+        - remote_ip_prefix: 0.0.0.0/0
+          port: 22
+        - remote_ip_prefix: 0.0.0.0/0
+          port: { get_property: [ nodecellar, port ] }
+
+  nodecellar_ip:
+    type: cloudify.openstack.nodes.FloatingIP
+    properties:
+      openstack_config: *openstack_config
+      floatingip:
+        floating_network_name: { get_property: [ external_network, resource_id ] }
+
+  private_subnet:
+    type: cloudify.openstack.nodes.Subnet
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: true
+      resource_id: { get_secret: private_subnet_name }
+    relationships:
+      - target: private_network
+        type: cloudify.relationships.contained_in
+
+  private_network:
+    type: cloudify.openstack.nodes.Network
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: true
+      resource_id: { get_secret: private_network_name }
+
+  public_subnet:
+    type: cloudify.openstack.nodes.Subnet
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: true
+      resource_id: { get_secret: public_subnet_name }
+    relationships:
+      - target: public_network
+        type: cloudify.relationships.contained_in
+      - target: router
+        type: cloudify.openstack.subnet_connected_to_router
+
+  public_network:
+    type: cloudify.openstack.nodes.Network
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: true
+      resource_id: { get_secret: public_network_name }
+
+  router:
+    type: cloudify.openstack.nodes.Router
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: true
+      resource_id: { get_secret: router_name }
+    relationships:
+      - target: external_network
+        type: cloudify.relationships.connected_to
+
+  external_network:
+    type: cloudify.openstack.nodes.Network
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: true
+      resource_id: { get_secret: external_network_name }
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: cloudify_host_cloud_config
+
+
+outputs:
+
+  endpoint:
+    description: Web application endpoint
+    value:
+      concat:
+      - 'http://'
+      - { get_attribute: [ nodecellar_ip, floating_ip_address ] }
+      - ':'
+      - '/'
