@@ -29,19 +29,6 @@ node_types:
         start: scripts/mongo/start-mongo.sh
         stop: scripts/mongo/stop-mongo.sh
         stop: scripts/mongo/stop-mongo.sh
- 
-  nodecellar.nodes.MonitoredMongoDatabase:
-    derived_from: nodecellar.nodes.MongoDatabase
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create: scripts/mongo/install-mongo.sh
-        start: scripts/mongo/start-mongo.sh
-        configure: scripts/mongo/install-pymongo.sh
-        stop: scripts/mongo/stop-mongo.sh
-
-
-
-
 
   ###########################################################
   # NodeJS Server.
