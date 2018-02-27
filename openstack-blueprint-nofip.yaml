@@ -29,6 +29,17 @@ inputs:
     description: The user name of the agent on the instance created from the image.
     default: ubuntu
 
+  network_name:
+    description: >
+      Openstack network name where WebApp will be instantiated
+    default: "private_network"
+
+  subnet_name:
+    description: >
+      Openstack subnet name where WebApp will be instantiated
+    default: "private_subnet"
+
+
 dsl_definitions:
 
   openstack_config: &openstack_config
@@ -101,7 +112,7 @@ node_templates:
     properties:
       openstack_config: *openstack_config
       use_external_resource: true
-      resource_id: { get_secret: private_subnet_name }
+      resource_id: { get_input: subnet_name }
     relationships:
       - target: private_network
         type: cloudify.relationships.contained_in
@@ -111,7 +122,7 @@ node_templates:
     properties:
       openstack_config: *openstack_config
       use_external_resource: true
-      resource_id: { get_secret: private_network_name }
+      resource_id: { get_input: network_name }
 
   router:
     type: cloudify.openstack.nodes.Router
