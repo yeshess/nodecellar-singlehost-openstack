@@ -5,9 +5,9 @@ description: >
   on Openstack
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.0.1/types.yaml
-  - http://www.getcloudify.org/spec/openstack-plugin/2.2.0/plugin.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.4.5/plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
+  - plugin:cloudify-openstack-plugin
+  - plugin:cloudify-utilities-plugin
   - types/nodecellar.yaml
   - types/openstack-types.yaml
   - imports/cloud-config.yaml
@@ -16,10 +16,10 @@ imports:
 inputs:
 
   private_network_name:
-    default: private_network
+    default: 8710ed1f-357d-4505-ac11-cab7c22ecefc
 
   private_subnet_name:
-    default: private_subnet
+    default: 5b989a2f-b870-4f27-8149-2c7b24da09e1
 
   image:
     description: >
@@ -38,12 +38,12 @@ inputs:
   network_name:
     description: >
       Openstack network name where WebApp will be instantiated
-    default: "private_network"
+    default: 8710ed1f-357d-4505-ac11-cab7c22ecefc
 
   subnet_name:
     description: >
       Openstack subnet name where WebApp will be instantiated
-    default: "private_subnet"
+    default: 5b989a2f-b870-4f27-8149-2c7b24da09e1
 
 
 
