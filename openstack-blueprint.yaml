@@ -16,10 +16,10 @@ imports:
 inputs:
 
   private_network_name:
-    default: 8710ed1f-357d-4505-ac11-cab7c22ecefc
+    default: network_openstack-net_private_network_km33kx
 
   private_subnet_name:
-    default: 5b989a2f-b870-4f27-8149-2c7b24da09e1
+    default: subnet_openstack-net_private_subnet_2dlfjm
 
   image:
     description: >
@@ -38,12 +38,12 @@ inputs:
   network_name:
     description: >
       Openstack network name where WebApp will be instantiated
-    default: 8710ed1f-357d-4505-ac11-cab7c22ecefc
+    default: network_openstack-net_private_network_km33kx
 
   subnet_name:
     description: >
       Openstack subnet name where WebApp will be instantiated
-    default: 5b989a2f-b870-4f27-8149-2c7b24da09e1
+    default: subnet_openstack-net_private_subnet_2dlfjm
 
 
 
