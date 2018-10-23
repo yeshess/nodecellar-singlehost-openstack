@@ -169,5 +169,4 @@ outputs:
       concat:
       - 'http://'
       - { get_attribute: [ nodecellar_ip, floating_ip_address ] }
-      - ':8080'
       - '/'
