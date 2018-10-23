@@ -128,7 +128,7 @@ node_templates:
     properties:
       openstack_config: *openstack_config
       use_external_resource: true
-      resource_id: { get_input: subnet_name }
+      resource_id: { get_secret: subnet_name }
     relationships:
       - target: private_network
         type: cloudify.relationships.contained_in
@@ -138,7 +138,7 @@ node_templates:
     properties:
       openstack_config: *openstack_config
       use_external_resource: true
-      resource_id: { get_input: network_name }
+      resource_id: { get_secret: network_name }
 
   router:
     type: cloudify.openstack.nodes.Router
